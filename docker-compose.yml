@@ -1,0 +1,81 @@
+version: '3.3'
+
+networks:
+  wordpress-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  wp-data:
+
+services:
+  wordpress:
+    build:
+      context: ./docker/wordpress
+      dockerfile: Dockerfile
+    working_dir: /var/www/html
+    volumes:
+      - wp-data:/var/www/html
+      - ./plugins/custom-plugin:/var/www/html/wp-content/plugins/custom-plugin:rw
+      - ./themes/custom-theme:/var/www/html/wp-content/themes/custom-theme:rw
+    environment:
+      XDEBUG_CONFIG: "remote_host=192.168.31.22"
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: admin
+      WORDPRESS_DB_NAME: development
+      HOME: /home/user
+    ports:
+      - 9997:80
+    depends_on:
+      - db
+      - wp-cli
+    networks:
+      - wordpress-network
+
+  wp-cli:
+    image: wordpress:cli
+    user: root
+    working_dir: /var/www/html
+    volumes:
+      - wp-data:/var/www/html
+      - ./plugins:/var/www/html/wp-content/plugins/custom-plugin:rw
+      - ./themes:/var/www/html/wp-content/themes/custom-theme:rw
+    networks:
+      - wordpress-network
+
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: development
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - wordpress-network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: admin
+    ports:
+      - 9996:80
+    depends_on:
+      - db
+    networks:
+      - wordpress-network
+
+  node-custom-theme:
+    build:
+      context: ./docker/node
+      dockerfile: Dockerfile
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    working_dir: /custom-theme
+    volumes:
+      - ./themes/custom-theme:/custom-theme:rw
+    command: parcel watch style.scss -d ./
