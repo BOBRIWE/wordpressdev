@@ -1,0 +1,1 @@
+{"version":3,"sources":["style.scss"],"names":[],"mappings":"AAAA;AAAA;AAAA;AAAA;AAKA;EACE","file":"style.css","sourceRoot":"","sourcesContent":["/*\nTheme Name: Custom Theme\nAuthor: Kirill Makharadze\n*/\n\nbody {\n  background: red;\n}"]}
